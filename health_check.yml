@@ -11,7 +11,7 @@
   
   tasks:
     - name: Get current timestamp
-      ansible.builtin.shell: "Get-Date -Format 'yyyy-MM-dd HH:mm:ss'"
+      ansible.builtin.shell: "date '+%Y-%m-%d %H:%M:%S'"
       register: current_time
       changed_when: false
 
@@ -27,7 +27,7 @@
 
     - name: Perform ping test
       ansible.builtin.shell: |
-        ping -n {{ retry_count }} {{ inventory_hostname }} | findstr "Average"
+        ping -c {{ retry_count }} {{ inventory_hostname }} | grep "avg"
       register: ping_result
       retries: "{{ retry_count }}"
       delay: "{{ retry_delay }}"
@@ -38,7 +38,7 @@
       ansible.builtin.set_fact:
         ping_stats:
           status: "{{ 'UP' if ping_result.rc == 0 else 'DOWN' }}"
-          latency: "{{ ping_result.stdout | regex_search('Average = (\\d+)ms', '\\1') | default('N/A') }}"
+          latency: "{{ ping_result.stdout | regex_search('min/avg/max/mdev = [\\d.]+/([\\d.]+)/', '\\1') | default('N/A') }}"
           attempts: "{{ ping_result.attempts | default(1) }}"
       when: ping_result is defined
 
@@ -52,7 +52,7 @@
       ignore_errors: yes
 
     - name: Get end timestamp
-      ansible.builtin.shell: "Get-Date -Format 'yyyy-MM-dd HH:mm:ss'"
+      ansible.builtin.shell: "date '+%Y-%m-%d %H:%M:%S'"
       register: end_time
       changed_when: false
 
