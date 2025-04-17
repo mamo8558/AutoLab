@@ -4,12 +4,19 @@
   gather_facts: no
   connection: local
   vars:
-    check_timeout: "{{ check_timeout | default(5) }}"
-    ports_to_check: "{{ ports_to_check | default([80, 443]) }}"
-    retry_count: "{{ retry_count | default(3) }}"
-    retry_delay: "{{ retry_delay | default(2) }}"
-  
+    check_timeout_default: 5
+    ports_to_check_default: [80, 443]
+    retry_count_default: 3
+    retry_delay_default: 2
+
   tasks:
+    - name: Set default variables if not defined
+      ansible.builtin.set_fact:
+        check_timeout: "{{ check_timeout | default(check_timeout_default) }}"
+        ports_to_check: "{{ ports_to_check | default(ports_to_check_default) }}"
+        retry_count: "{{ retry_count | default(retry_count_default) }}"
+        retry_delay: "{{ retry_delay | default(retry_delay_default) }}"
+
     - name: Get current timestamp
       ansible.builtin.shell: "date '+%Y-%m-%d %H:%M:%S'"
       register: current_time
