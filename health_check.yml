@@ -10,13 +10,18 @@
     retry_delay: "{{ retry_delay | default(2) }}"
   
   tasks:
+    - name: Get current timestamp
+      ansible.builtin.shell: "Get-Date -Format 'yyyy-MM-dd HH:mm:ss'"
+      register: current_time
+      changed_when: false
+
     - name: Set initial health status
       ansible.builtin.set_fact:
         health_status:
           host: "{{ inventory_hostname }}"
           status: "PENDING"
           checks: []
-          start_time: "{{ ansible_date_time.iso8601 }}"
+          start_time: "{{ current_time.stdout }}"
           end_time: null
           overall_status: "PENDING"
 
@@ -46,6 +51,11 @@
       loop: "{{ ports_to_check }}"
       ignore_errors: yes
 
+    - name: Get end timestamp
+      ansible.builtin.shell: "Get-Date -Format 'yyyy-MM-dd HH:mm:ss'"
+      register: end_time
+      changed_when: false
+
     - name: Compile health check results
       ansible.builtin.set_fact:
         health_status:
@@ -61,7 +71,7 @@
                 {% for result in port_check.results %}
                 - Port {{ result.item }}: {{ 'OPEN' if not result.failed else 'CLOSED' }}
                 {% endfor %}
-          end_time: "{{ ansible_date_time.iso8601 }}"
+          end_time: "{{ end_time.stdout }}"
           overall_status: "{{ 'HEALTHY' if ping_stats.status == 'UP' and port_check.results | selectattr('failed') | list | length == 0 else 'UNHEALTHY' }}"
 
     - name: Display health check results
