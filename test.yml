@@ -5,6 +5,12 @@
   connection: network_cli
 
   tasks:
+    # Ensure facts are gathered for the control node to detect the package manager
+    - name: Gather facts for the control node
+      ansible.builtin.setup:
+      delegate_to: localhost
+      become: yes
+
     - name: Ensure ping utility is available on the control node
       ansible.builtin.package:
         name: iputils-ping
