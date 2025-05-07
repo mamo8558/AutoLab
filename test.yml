@@ -1,0 +1,29 @@
+---
+- name: Simplified Network Health Check
+  hosts: all
+  gather_facts: no
+  connection: local
+
+  tasks:
+    - name: Perform ping test and capture packet loss and latency
+      ansible.builtin.shell: |
+        ping -c 4 {{ inventory_hostname }} | grep -E "packet loss|rtt"
+      register: ping_result
+      ignore_errors: yes
+      changed_when: false
+
+    - name: Parse ping results
+      ansible.builtin.set_fact:
+        ping_stats:
+          packet_loss: "{{ ping_result.stdout | regex_search('([0-9]+)% packet loss', '\\1') | default('N/A') }}"
+          latency: "{{ ping_result.stdout | regex_search('rtt min/avg/max/mdev = [\\d.]+/([\\d.]+)/', '\\1') | default('N/A') }}"
+          status: "{{ 'UP' if ping_result.rc == 0 else 'DOWN' }}"
+
+    - name: Display ping results
+      ansible.builtin.debug:
+        msg: |
+          ===== Ping Results for {{ inventory_hostname }} =====
+          Status: {{ ping_stats.status }}
+          Packet Loss: {{ ping_stats.packet_loss }}%
+          Average Latency: {{ ping_stats.latency }} ms
+          ============================================
