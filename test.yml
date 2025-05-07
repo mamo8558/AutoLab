@@ -1,14 +1,21 @@
 ---
-- name: Simplified Network Health Check
+- name: Simplified Network Health Check for Cisco Devices
   hosts: all
   gather_facts: no
-  connection: local
+  connection: network_cli
 
   tasks:
-    - name: Perform ping test and capture packet loss and latency
+    - name: Ensure ping utility is available on the control node
+      ansible.builtin.package:
+        name: iputils-ping
+        state: present
+      delegate_to: localhost
+
+    - name: Perform ping test from the control node to the Cisco device
       ansible.builtin.shell: |
         ping -c 4 {{ inventory_hostname }} | grep -E "packet loss|rtt"
       register: ping_result
+      delegate_to: localhost
       ignore_errors: yes
       changed_when: false
 
