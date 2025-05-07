@@ -10,6 +10,7 @@
         name: iputils-ping
         state: present
       delegate_to: localhost
+      become: yes
 
     - name: Perform ping test from the control node to the Cisco device
       ansible.builtin.shell: |
