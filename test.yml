@@ -1,11 +1,11 @@
 ---
 - name: Network Health Check for Cisco Devices
-  hosts: all
+  hosts: localhost
   gather_facts: no
 
   tasks:
     - name: Perform ping test to the Cisco device
-      ansible.builtin.shell: |
+      local_action: ansible.builtin.shell |
         ping -c 4 {{ inventory_hostname }}
       register: ping_result
       ignore_errors: yes
