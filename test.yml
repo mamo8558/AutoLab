@@ -1,28 +1,13 @@
 ---
-- name: Simplified Network Health Check for Cisco Devices
+- name: Network Health Check for Cisco Devices
   hosts: all
   gather_facts: no
-  connection: network_cli
 
   tasks:
-    # Ensure facts are gathered for the control node to detect the package manager
-    - name: Gather facts for the control node
-      ansible.builtin.setup:
-      delegate_to: localhost
-      become: yes
-
-    - name: Ensure ping utility is available on the control node
-      ansible.builtin.package:
-        name: iputils-ping
-        state: present
-      delegate_to: localhost
-      become: yes
-
-    - name: Perform ping test from the control node to the Cisco device
+    - name: Perform ping test to the Cisco device
       ansible.builtin.shell: |
-        ping -c 4 {{ inventory_hostname }} | grep -E "packet loss|rtt"
+        ping -c 4 {{ inventory_hostname }}
       register: ping_result
-      delegate_to: localhost
       ignore_errors: yes
       changed_when: false
 
@@ -30,7 +15,7 @@
       ansible.builtin.set_fact:
         ping_stats:
           packet_loss: "{{ ping_result.stdout | regex_search('([0-9]+)% packet loss', '\\1') | default('N/A') }}"
-          latency: "{{ ping_result.stdout | regex_search('rtt min/avg/max/mdev = [\\d.]+/([\\d.]+)/', '\\1') | default('N/A') }}"
+          avg_latency: "{{ ping_result.stdout | regex_search('rtt min/avg/max/mdev = [\\d.]+/([\\d.]+)/', '\\1') | default('N/A') }}"
           status: "{{ 'UP' if ping_result.rc == 0 else 'DOWN' }}"
 
     - name: Display ping results
@@ -39,5 +24,5 @@
           ===== Ping Results for {{ inventory_hostname }} =====
           Status: {{ ping_stats.status }}
           Packet Loss: {{ ping_stats.packet_loss }}%
-          Average Latency: {{ ping_stats.latency }} ms
+          Average Latency: {{ ping_stats.avg_latency }} ms
           ============================================
